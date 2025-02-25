@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Million-Pixel-Shop</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        canvas { border: 1px solid black; cursor: pointer; }
+        body { text-align: center; font-family: Arial, sans-serif; overflow: hidden; }
+        canvas { border: 1px solid black; cursor: pointer; display: block; margin: auto; }
         #colorPicker { margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
     <h1>Kaufe und gestalte deinen Pixel!</h1>
     <p>Klicke auf einen Pixel, um ihn zu kaufen und färbe ihn danach ein.</p>
-    <canvas id="pixelCanvas" width="1000" height="1000"></canvas>
+    <canvas id="pixelCanvas"></canvas>
     <input type="color" id="colorPicker" value="#ff0000">
 
     <script>
@@ -21,52 +21,109 @@
         const ctx = canvas.getContext('2d');
         const colorPicker = document.getElementById('colorPicker');
 
-        const pixelSize = 1; // 1 Pixel = 1x1 px
+        const pixelSize = 1; // Standardgröße der Pixel (wird skaliert)
         const rows = 1000;
         const cols = 1000;
         let boughtPixels = {}; // Speichert gekaufte Pixel mit ihrer Farbe
+        let zoom = 1; // Zoom-Faktor
+        let offsetX = 0, offsetY = 0; // Verschiebung des Canvas
+        let isDragging = false, startX, startY;
 
-        // Initiales Raster zeichnen
-        function drawPixels() {
-            ctx.fillStyle = 'lightgray';
-            ctx.fillRect(0, 0, cols, rows);
+        // Canvas-Größe setzen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 100; // Platz für Titel & Buttons
+            drawPixels();
         }
 
-        drawPixels(); // Starte mit leerem Raster
+        window.addEventListener('resize', resizeCanvas);
+
+        // Pixelraster zeichnen
+        function drawPixels() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'lightgray';
+            ctx.fillRect(0, 0, cols * pixelSize * zoom, rows * pixelSize * zoom);
+
+            // Gekaufte Pixel erneut zeichnen
+            for (let key in boughtPixels) {
+                const [x, y] = key.split(',').map(Number);
+                ctx.fillStyle = boughtPixels[key];
+                ctx.fillRect(x * pixelSize * zoom + offsetX, y * pixelSize * zoom + offsetY, pixelSize * zoom, pixelSize * zoom);
+            }
+        }
+
+        resizeCanvas(); // Initiale Größe setzen
 
         let selectedPixel = null; // Speichert den zuletzt geklickten Pixel
 
-        // Pixel-Klick-Event
+        // Klick auf Canvas
         canvas.addEventListener('click', function(event) {
             const rect = canvas.getBoundingClientRect();
-            const x = Math.floor(event.clientX - rect.left);
-            const y = Math.floor(event.clientY - rect.top);
+            const x = Math.floor((event.clientX - rect.left - offsetX) / (pixelSize * zoom));
+            const y = Math.floor((event.clientY - rect.top - offsetY) / (pixelSize * zoom));
             const pixelKey = `${x},${y}`;
 
             if (boughtPixels[pixelKey]) {
-                // Wenn Pixel gekauft wurde -> Farbe ändern
+                // Farbe ändern
                 selectedPixel = pixelKey;
                 colorPicker.style.display = 'block';
-                colorPicker.value = boughtPixels[pixelKey]; // Setze aktuelle Farbe
+                colorPicker.value = boughtPixels[pixelKey]; 
             } else {
                 // Pixel kaufen
                 const confirmation = confirm(`Willst du den Pixel bei (${x}, ${y}) kaufen?`);
                 if (confirmation) {
-                    boughtPixels[pixelKey] = '#ff0000'; // Standardfarbe nach Kauf
-                    ctx.fillStyle = boughtPixels[pixelKey];
-                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                    boughtPixels[pixelKey] = '#ff0000'; // Standardfarbe
+                    drawPixels();
                 }
             }
         });
 
-        // Farbe nach Kauf ändern
+        // Farbe ändern
         colorPicker.addEventListener('input', function() {
             if (selectedPixel) {
-                const [x, y] = selectedPixel.split(',').map(Number);
                 boughtPixels[selectedPixel] = colorPicker.value;
-                ctx.fillStyle = colorPicker.value;
-                ctx.fillRect(x, y, pixelSize, pixelSize);
+                drawPixels();
             }
+        });
+
+        // Zoom mit Mausrad
+        canvas.addEventListener('wheel', function(event) {
+            event.preventDefault();
+            const scaleFactor = 1.1; // Zoom-Stärke
+            const oldZoom = zoom;
+            zoom *= event.deltaY < 0 ? scaleFactor : 1 / scaleFactor;
+            zoom = Math.min(Math.max(zoom, 0.1), 10); // Zoom begrenzen
+
+            // Neuberechnung der Verschiebung für zentrierten Zoom
+            const mouseX = event.clientX - canvas.offsetLeft;
+            const mouseY = event.clientY - canvas.offsetTop;
+            offsetX = mouseX - ((mouseX - offsetX) * (zoom / oldZoom));
+            offsetY = mouseY - ((mouseY - offsetY) * (zoom / oldZoom));
+
+            drawPixels();
+        });
+
+        // Verschieben des Canvas mit Maus
+        canvas.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            startX = event.clientX - offsetX;
+            startY = event.clientY - offsetY;
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                offsetX = event.clientX - startX;
+                offsetY = event.clientY - startY;
+                drawPixels();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
         });
     </script>
 </body>
