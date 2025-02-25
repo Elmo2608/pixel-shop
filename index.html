@@ -1,39 +1,32 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Kaufen</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Kaufen</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Pixel Kaufen</h1>
-    <div id="grid" class="grid"></div>
-    
-    <div id="popup" class="popup">
-        <h2>Pixel ändern</h2>
-        <p>Wollen Sie nur dieses Pixel ändern oder weitere kaufen?</p>
-        <button id="buyMore">Weitere Pixel kaufen</button>
-        <button id="confirm">Nur dieses ändern</button>
-    </div>
-    
-    <div id="colorPopup" class="popup">
-        <h2>Farbe auswählen</h2>
-        <input type="color" id="colorPicker">
-        <button id="changeColor">Farbe anwenden</button>
-    </div>
-    
-    <div id="checkout" class="checkout">
-        <h2>Checkout</h2>
-        <p id="totalPrice">Gesamtpreis: 0,00€</p>
-        <button id="payButton">Jetzt Bezahlen</button>
-    </div>
-    
-    <div id="purchasedPixels" class="purchasedPixels">
-        <h3>Gekaufte Pixel</h3>
-        <ul id="purchasedList"></ul>
-    </div>
+  <div class="container">
+    <div class="grid" id="pixel-grid"></div>
+  </div>
 
-    <script src="script.js"></script>
+  <div class="popup" id="pixel-popup">
+    <div class="popup-content">
+      <h3>Pixel auswählen</h3>
+      <button id="close-popup">Schließen</button>
+      <p>Wollen Sie mehr Pixel kaufen?</p>
+      <button id="buy-more">Mehr kaufen</button>
+      <button id="buy-single">Nur diesen kaufen</button>
+    </div>
+  </div>
+
+  <div class="order-summary" id="order-summary">
+    <h3>Gekaufte Pixel</h3>
+    <ul id="pixel-list"></ul>
+    <button id="pay">Jetzt bezahlen</button>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
