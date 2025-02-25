@@ -1,16 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   const grid = document.getElementById('pixel-grid');
-  const popup = document.getElementById('pixel-popup');
+  const sliderContainer = document.getElementById('slider-container');
+  const selectedPixelsContainer = document.getElementById('selected-pixels');
+  const confirmPurchaseBtn = document.getElementById('confirm-purchase');
   const closePopupBtn = document.getElementById('close-popup');
   const buyMoreBtn = document.getElementById('buy-more');
   const buySingleBtn = document.getElementById('buy-single');
-  const orderSummary = document.getElementById('order-summary');
   const pixelList = document.getElementById('pixel-list');
   const payBtn = document.getElementById('pay');
 
   let selectedPixels = [];
   let purchasedPixels = [];
-  
+
   // Pixel-Grid generieren (100000 Pixel)
   for (let i = 0; i < 100000; i++) {
     const pixel = document.createElement('div');
@@ -19,44 +20,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pixel.addEventListener('click', (e) => {
       const pixelElement = e.target;
-      if (!purchasedPixels.includes(pixelElement.dataset.index)) {
-        selectedPixels = [pixelElement.dataset.index];
-        openPopup();
+      if (!selectedPixels.includes(pixelElement.dataset.index)) {
+        selectedPixels.push(pixelElement.dataset.index);
+        pixelElement.style.border = '2px solid red'; // Markiere das Pixel
+        updateSlider();
       }
     });
 
     grid.appendChild(pixel);
   }
 
-  function openPopup() {
-    popup.style.display = 'flex';
+  function updateSlider() {
+    selectedPixelsContainer.innerHTML = '';
+    selectedPixels.forEach((pixelIndex, index) => {
+      const pixelContainer = document.createElement('div');
+      pixelContainer.classList.add('pixel-container');
+      
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.id = `color-${pixelIndex}`;
+      
+      pixelContainer.appendChild(colorInput);
+      selectedPixelsContainer.appendChild(pixelContainer);
+    });
+
+    sliderContainer.style.display = 'block';
   }
 
-  closePopupBtn.addEventListener('click', () => {
-    popup.style.display = 'none';
+  confirmPurchaseBtn.addEventListener('click', () => {
+    selectedPixels.forEach((pixelIndex) => {
+      const color = document.getElementById(`color-${pixelIndex}`).value;
+      updatePixelColor(pixelIndex, color);
+    });
+    
+    // Bezahlung simulieren
+    simulatePayment();
+    sliderContainer.style.display = 'none';
   });
 
-  buyMoreBtn.addEventListener('click', () => {
-    const color = prompt('Geben Sie eine Farbe für das Pixel ein (Hex oder Farbname):');
-    if (color) {
-      updatePixelColor(color);
-    }
-  });
-
-  buySingleBtn.addEventListener('click', () => {
-    const color = prompt('Geben Sie eine Farbe für das Pixel ein (Hex oder Farbname):');
-    if (color) {
-      updatePixelColor(color);
-      // Bezahlung simulieren (0,01€ pro Pixel)
-      simulatePayment();
-    }
-  });
-
-  function updatePixelColor(color) {
-    const pixel = document.querySelector(`.pixel[data-index="${selectedPixels[0]}"]`);
+  function updatePixelColor(pixelIndex, color) {
+    const pixel = document.querySelector(`.pixel[data-index="${pixelIndex}"]`);
     pixel.style.backgroundColor = color;
-    purchasedPixels.push(selectedPixels[0]);
-    selectedPixels = [];
+    purchasedPixels.push({ pixelIndex, color });
 
     const listItem = document.createElement('li');
     listItem.textContent = `Pixel ${purchasedPixels.length}: ${color}`;
@@ -70,6 +75,27 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Die Änderungen sind nun für alle sichtbar!');
     }, 1000);
   }
+
+  // Popup-Logik
+  closePopupBtn.addEventListener('click', () => {
+    popup.style.display = 'none';
+  });
+
+  buyMoreBtn.addEventListener('click', () => {
+    const color = prompt('Geben Sie eine Farbe für das Pixel ein (Hex oder Farbname):');
+    if (color) {
+      updatePixelColor(selectedPixels[0], color);
+    }
+  });
+
+  buySingleBtn.addEventListener('click', () => {
+    const color = prompt('Geben Sie eine Farbe für das Pixel ein (Hex oder Farbname):');
+    if (color) {
+      updatePixelColor(selectedPixels[0], color);
+      // Bezahlung simulieren
+      simulatePayment();
+    }
+  });
 
   payBtn.addEventListener('click', () => {
     alert('Bezahlvorgang abgeschlossen! Alle Pixel sind nun Ihre!');
