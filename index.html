@@ -4,126 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Million-Pixel-Shop</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; overflow: hidden; }
         canvas { border: 1px solid black; cursor: pointer; display: block; margin: auto; }
-        #colorPicker { margin-top: 10px; display: none; }
+        #colorPicker, #nameInput, #messageInput, #buyButton { margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
     <h1>Kaufe und gestalte deinen Pixel!</h1>
-    <p>Klicke auf einen Pixel, um ihn zu kaufen und färbe ihn danach ein.</p>
     <canvas id="pixelCanvas"></canvas>
-    <input type="color" id="colorPicker" value="#ff0000">
+    <input type="color" id="colorPicker">
+    <input type="text" id="nameInput" placeholder="Dein Name">
+    <input type="text" id="messageInput" placeholder="Deine Nachricht">
+    <button id="buyButton">Pixel kaufen</button>
+    <div id="paypal-button-container"></div>
 
     <script>
+        const firebaseConfig = { /* Deine Firebase-Konfiguration */ };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
         const canvas = document.getElementById('pixelCanvas');
         const ctx = canvas.getContext('2d');
         const colorPicker = document.getElementById('colorPicker');
+        const nameInput = document.getElementById('nameInput');
+        const messageInput = document.getElementById('messageInput');
+        const buyButton = document.getElementById('buyButton');
+        let zoom = 1, offsetX = 0, offsetY = 0, selectedPixel = null;
 
-        const pixelSize = 1; // Standardgröße der Pixel (wird skaliert)
-        const rows = 1000;
-        const cols = 1000;
-        let boughtPixels = {}; // Speichert gekaufte Pixel mit ihrer Farbe
-        let zoom = 1; // Zoom-Faktor
-        let offsetX = 0, offsetY = 0; // Verschiebung des Canvas
-        let isDragging = false, startX, startY;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 100;
 
-        // Canvas-Größe setzen
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - 100; // Platz für Titel & Buttons
-            drawPixels();
-        }
+        function drawPixels() { /* Lädt Pixel aus der Datenbank und zeichnet sie */ }
+        function updatePixel(x, y, color, name, message) { /* Speichert Pixel in Firebase */ }
 
-        window.addEventListener('resize', resizeCanvas);
-
-        // Pixelraster zeichnen
-        function drawPixels() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'lightgray';
-            ctx.fillRect(0, 0, cols * pixelSize * zoom, rows * pixelSize * zoom);
-
-            // Gekaufte Pixel erneut zeichnen
-            for (let key in boughtPixels) {
-                const [x, y] = key.split(',').map(Number);
-                ctx.fillStyle = boughtPixels[key];
-                ctx.fillRect(x * pixelSize * zoom + offsetX, y * pixelSize * zoom + offsetY, pixelSize * zoom, pixelSize * zoom);
-            }
-        }
-
-        resizeCanvas(); // Initiale Größe setzen
-
-        let selectedPixel = null; // Speichert den zuletzt geklickten Pixel
-
-        // Klick auf Canvas
         canvas.addEventListener('click', function(event) {
-            const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((event.clientX - rect.left - offsetX) / (pixelSize * zoom));
-            const y = Math.floor((event.clientY - rect.top - offsetY) / (pixelSize * zoom));
-            const pixelKey = `${x},${y}`;
+            const x = Math.floor((event.clientX - offsetX) / zoom);
+            const y = Math.floor((event.clientY - offsetY) / zoom);
+            selectedPixel = `${x},${y}`;
+            colorPicker.style.display = 'block';
+            nameInput.style.display = 'block';
+            messageInput.style.display = 'block';
+            buyButton.style.display = 'block';
+        });
 
-            if (boughtPixels[pixelKey]) {
-                // Farbe ändern
-                selectedPixel = pixelKey;
-                colorPicker.style.display = 'block';
-                colorPicker.value = boughtPixels[pixelKey]; 
-            } else {
-                // Pixel kaufen
-                const confirmation = confirm(`Willst du den Pixel bei (${x}, ${y}) kaufen?`);
-                if (confirmation) {
-                    boughtPixels[pixelKey] = '#ff0000'; // Standardfarbe
-                    drawPixels();
+        buyButton.addEventListener('click', function() {
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({ purchase_units: [{ amount: { value: '1.00' } }] });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function() {
+                        updatePixel(selectedPixel.split(',')[0], selectedPixel.split(',')[1], colorPicker.value, nameInput.value, messageInput.value);
+                        drawPixels();
+                    });
                 }
-            }
-        });
-
-        // Farbe ändern
-        colorPicker.addEventListener('input', function() {
-            if (selectedPixel) {
-                boughtPixels[selectedPixel] = colorPicker.value;
-                drawPixels();
-            }
-        });
-
-        // Zoom mit Mausrad
-        canvas.addEventListener('wheel', function(event) {
-            event.preventDefault();
-            const scaleFactor = 1.1; // Zoom-Stärke
-            const oldZoom = zoom;
-            zoom *= event.deltaY < 0 ? scaleFactor : 1 / scaleFactor;
-            zoom = Math.min(Math.max(zoom, 0.1), 10); // Zoom begrenzen
-
-            // Neuberechnung der Verschiebung für zentrierten Zoom
-            const mouseX = event.clientX - canvas.offsetLeft;
-            const mouseY = event.clientY - canvas.offsetTop;
-            offsetX = mouseX - ((mouseX - offsetX) * (zoom / oldZoom));
-            offsetY = mouseY - ((mouseY - offsetY) * (zoom / oldZoom));
-
-            drawPixels();
-        });
-
-        // Verschieben des Canvas mit Maus
-        canvas.addEventListener('mousedown', (event) => {
-            isDragging = true;
-            startX = event.clientX - offsetX;
-            startY = event.clientY - offsetY;
-        });
-
-        canvas.addEventListener('mousemove', (event) => {
-            if (isDragging) {
-                offsetX = event.clientX - startX;
-                offsetY = event.clientY - startY;
-                drawPixels();
-            }
-        });
-
-        canvas.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            isDragging = false;
+            }).render('#paypal-button-container');
         });
     </script>
 </body>
