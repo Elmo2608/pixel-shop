@@ -3,67 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Million-Pixel-Shop</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID"></script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; overflow: auto; }
-        canvas { border: 1px solid black; cursor: pointer; display: block; margin: auto; }
-        #colorPicker, #nameInput, #messageInput, #buyButton { margin-top: 10px; display: none; }
-    </style>
+    <title>Pixel Kaufen</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Kaufe und gestalte deinen Pixel!</h1>
-    <canvas id="pixelCanvas"></canvas>
-    <input type="color" id="colorPicker">
-    <input type="text" id="nameInput" placeholder="Dein Name">
-    <input type="text" id="messageInput" placeholder="Deine Nachricht">
-    <button id="buyButton">Pixel kaufen</button>
-    <div id="paypal-button-container"></div>
+    <h1>Pixel Kaufen</h1>
+    <div id="grid" class="grid"></div>
+    
+    <div id="popup" class="popup">
+        <h2>Pixel ändern</h2>
+        <p>Wollen Sie nur dieses Pixel ändern oder weitere kaufen?</p>
+        <button id="buyMore">Weitere Pixel kaufen</button>
+        <button id="confirm">Nur dieses ändern</button>
+    </div>
+    
+    <div id="colorPopup" class="popup">
+        <h2>Farbe auswählen</h2>
+        <input type="color" id="colorPicker">
+        <button id="changeColor">Farbe anwenden</button>
+    </div>
+    
+    <div id="checkout" class="checkout">
+        <h2>Checkout</h2>
+        <p id="totalPrice">Gesamtpreis: 0,00€</p>
+        <button id="payButton">Jetzt Bezahlen</button>
+    </div>
+    
+    <div id="purchasedPixels" class="purchasedPixels">
+        <h3>Gekaufte Pixel</h3>
+        <ul id="purchasedList"></ul>
+    </div>
 
-    <script>
-        const firebaseConfig = { /* Deine Firebase-Konfiguration */ };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        const canvas = document.getElementById('pixelCanvas');
-        const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('colorPicker');
-        const nameInput = document.getElementById('nameInput');
-        const messageInput = document.getElementById('messageInput');
-        const buyButton = document.getElementById('buyButton');
-        let offsetX = 0, offsetY = 0, selectedPixel = null;
-
-        canvas.width = 1000;
-        canvas.height = 1000;
-
-        function drawPixels() { /* Lädt Pixel aus der Datenbank und zeichnet sie */ }
-        function updatePixel(x, y, color, name, message) { /* Speichert Pixel in Firebase */ }
-
-        canvas.addEventListener('click', function(event) {
-            const x = Math.floor(event.offsetX);
-            const y = Math.floor(event.offsetY);
-            selectedPixel = `${x},${y}`;
-            colorPicker.style.display = 'block';
-            nameInput.style.display = 'block';
-            messageInput.style.display = 'block';
-            buyButton.style.display = 'block';
-        });
-
-        buyButton.addEventListener('click', function() {
-            paypal.Buttons({
-                createOrder: function(data, actions) {
-                    return actions.order.create({ purchase_units: [{ amount: { value: '1.00' } }] });
-                },
-                onApprove: function(data, actions) {
-                    return actions.order.capture().then(function() {
-                        updatePixel(selectedPixel.split(',')[0], selectedPixel.split(',')[1], colorPicker.value, nameInput.value, messageInput.value);
-                        drawPixels();
-                    });
-                }
-            }).render('#paypal-button-container');
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
