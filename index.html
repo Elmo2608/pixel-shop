@@ -6,18 +6,31 @@
     <title>Pixel Shop</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        .pixel-container { display: grid; grid-template-columns: repeat(10, 20px); gap: 2px; margin: auto; width: 220px; }
-        .pixel { width: 20px; height: 20px; background: lightgray; border: 1px solid #ccc; cursor: pointer; }
+        .pixel-container { 
+    display: grid; 
+    grid-template-columns: repeat(1000, 1px); /* 1000 Pixel pro Reihe */
+    gap: 0; 
+    margin: auto; 
+    width: 1000px; /* Gesamtbreite auf 1000px setzen */
+}
+.pixel { 
+    width: 1px; 
+    height: 1px; 
+    background: lightgray; 
+    border: none; 
+    cursor: pointer; 
+}
+
     </style>
 </head>
 <body>
-    <h1>Verkaufe deine eigenen Pixel!</h1>
+    <h1>Kaufe dir deine eigenen Pixel!</h1>
     <p>Klicke auf ein Pixel, um es zu kaufen.</p>
     <div class="pixel-container"></div>
 
     <script>
         const container = document.querySelector('.pixel-container');
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 1000000; i++) {
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
             pixel.onclick = () => alert('Pixel gekauft!');
